@@ -24,13 +24,15 @@ router.get("/:id", getBlog, (req, res) => {
   res.json(res.blog);
 });
 
+//These routes should be authenticated, though its not entirely necessary at the moment.
+
 //CREATE
 router.post("/", async (req, res) => {
-  const blog = new Blog({
-    title: req.body.title,
-    description: req.body.description,
-  });
   try {
+    const blog = new Blog({
+      title: req.body.title,
+      description: req.body.description,
+    });
     const newBlog = await blog.save();
     res.status(201).json(newBlog);
   } catch (err) {
@@ -40,10 +42,10 @@ router.post("/", async (req, res) => {
 
 //UPDATE one
 router.patch("/:id", getBlog, async (req, res) => {
-  if (req.body.title != null) {
+  if (req.body.title) {
     res.blog.title = req.body.title;
   }
-  if (req.body.description != null) {
+  if (req.body.description) {
     res.blog.description = req.body.description;
   }
   try {
@@ -64,10 +66,9 @@ router.delete("/:id", getBlog, async (req, res) => {
 });
 
 async function getBlog(req, res, next) {
-  let blog;
   try {
-    blog = await Blog.findById(req.params.id);
-    if (blog == null) {
+    let blog = await Blog.findById(req.params.id);
+    if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
     }
   } catch (err) {
