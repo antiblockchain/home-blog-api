@@ -7,7 +7,7 @@ const secretKey = require("../vars");
 
 router.use(
   cors({
-    origin: "*",
+    origin: "https://elynch.co",
     methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
   })
@@ -43,7 +43,7 @@ router.get("/", async (req, res) => {
 });
 //GET one
 router.get("/:id", getBlog, (req, res) => {
-  res.json(res.blog);
+  res.status(200).json(res.blog);
 });
 
 //Authenticate the routes below
@@ -89,14 +89,14 @@ router.delete("/:id", authenticateToken, getBlog, async (req, res) => {
 
 async function getBlog(req, res, next) {
   try {
-    let blog = await Blog.findById(req.params.id);
+    const blog = await Blog.findById(req.params.id);
     if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
     }
+    res.blog = blog;
+    next();
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
-  res.blog = blog;
-  next();
 }
 module.exports = router;
