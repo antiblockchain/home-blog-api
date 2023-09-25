@@ -4,17 +4,17 @@ const app = express();
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-const crypto = require("crypto");
+const secretKey = require("./vars");
 
-const secretKey = crypto.randomBytes(20).toString("hex");
-
-mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true });
+mongoose.connect("mongodb://localhost/blogapi", { useNewUrlParser: true });
 
 const db = mongoose.connection;
 
 app.use(express.json());
+app.use(cookieParser());
 
 const user = {
+  //Just for testing purposes.
   username: "user",
   password: "1234",
 };
@@ -26,20 +26,18 @@ app.post("/authenticate", async (req, res) => {
     req.body.username == user.username &&
     req.body.password == user.password
   ) {
-    const token = jwt.sign({ id: user.id }, secretKey, { expiresIn: "30m" });
+    const token = jwt.sign({ password: user.password }, secretKey, {
+      expiresIn: "20m",
+    });
     res.cookie("accessToken", token, {
       httpOnly: true,
       maxAge: 1000 * 60 * 20,
     });
     return res.status(200).json({ message: "Successfully logged in" });
   } else {
-    res.status(300).json({ message: "Forbidden access" });
+    res.status(401).json({ message: "Forbidden access" });
   }
 });
-
-async function authenticateToken() {
-  res.status(300).json({ message: "WARNING: NOT AUTHENTICATED" });
-}
 
 const blogRouter = require("./routes/blog");
 

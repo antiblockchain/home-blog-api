@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Blog = require("../models/blog");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const secretKey = require("../vars");
 
 router.use(
   cors({
@@ -9,6 +11,25 @@ router.use(
     methods: ["GET", "POST", "PATCH", "DELETE"],
   })
 );
+
+//Check for JWT token to be able to modify any blogs. Might not be necessary having a firewall, but just in case
+async function authenticateToken(req, res, next) {
+  const token = req?.cookies?.accessToken.toString();
+
+  if (!token) {
+    return res.status(401).json({ message: "Access forbidden: Unauthorized" });
+  }
+  jwt.verify(token, secretKey, (err, decoded) => {
+    if (err) {
+      return res
+        .status(401)
+        .json({ message: "Access forbidden: Unauthorized jwt" });
+    }
+    req.user = decoded;
+
+    next();
+  });
+}
 
 //GET all
 router.get("/", async (req, res) => {
@@ -24,10 +45,10 @@ router.get("/:id", getBlog, (req, res) => {
   res.json(res.blog);
 });
 
-//These routes should be authenticated, though its not entirely necessary at the moment.
+//Authenticate the routes below
 
 //CREATE
-router.post("/", async (req, res) => {
+router.post("/", authenticateToken, async (req, res) => {
   try {
     const blog = new Blog({
       title: req.body.title,
@@ -41,7 +62,7 @@ router.post("/", async (req, res) => {
 });
 
 //UPDATE one
-router.patch("/:id", getBlog, async (req, res) => {
+router.patch("/:id", authenticateToken, getBlog, async (req, res) => {
   if (req.body.title) {
     res.blog.title = req.body.title;
   }
@@ -56,7 +77,7 @@ router.patch("/:id", getBlog, async (req, res) => {
   }
 });
 //DELETE one
-router.delete("/:id", getBlog, async (req, res) => {
+router.delete("/:id", authenticateToken, getBlog, async (req, res) => {
   try {
     await res.blog.remove();
     res.json({ message: "Successfully deleted" });
