@@ -13,7 +13,7 @@ router.use(
   })
 );
 
-//Check for JWT token to be able to modify any blogs. Might not be necessary having a firewall, but just in case
+//Check for JWT token to be able to modify any blogs.
 async function authenticateToken(req, res, next) {
   const token = req?.cookies?.accessToken.toString();
 
